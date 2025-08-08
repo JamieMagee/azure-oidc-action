@@ -1,0 +1,25 @@
+# Git files
+.git/
+.gitignore
+
+# Documentation
+README.md
+DESIGN.md
+examples/
+
+# GitHub workflows (not needed in image)
+.github/
+
+# Test files
+*_test.go
+
+# Build artifacts
+azure-oidc-action
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

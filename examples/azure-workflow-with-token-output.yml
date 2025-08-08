@@ -1,0 +1,101 @@
+name: Azure OIDC Example with Token Output
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for OIDC token
+  contents: read # Required for checkout
+
+jobs:
+  azure-operations-with-token:
+    runs-on: ubuntu-latest
+    name: Azure Operations with Token Output
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Azure using OIDC (with token output)
+        id: azure-auth
+        uses: your-username/azure-oidc-action@v1
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          output-token: true # Enable token output
+
+      - name: Show token information
+        run: |
+          echo "Token expires at: ${{ steps.azure-auth.outputs.token-expiry }}"
+          echo "Token length: ${#AZURE_TOKEN}"
+          echo "Token preview: ${AZURE_TOKEN:0:50}..."
+        env:
+          AZURE_TOKEN: ${{ steps.azure-auth.outputs.azure-token }}
+
+      # Example: Use token with curl for direct Azure REST API calls
+      - name: Call Azure REST API directly
+        run: |
+          # Example: Get subscription information
+          curl -s -H "Authorization: Bearer $AZURE_TOKEN" \
+               -H "Content-Type: application/json" \
+               "https://management.azure.com/subscriptions?api-version=2020-01-01" | \
+               jq '.value[] | {subscriptionId, displayName, state}'
+        env:
+          AZURE_TOKEN: ${{ steps.azure-auth.outputs.azure-token }}
+
+      # Example: Pass token to a custom script
+      - name: Custom script with Azure token
+        run: |
+          # Create a temporary script that uses the token
+          cat > custom_azure_script.sh << 'EOF'
+          #!/bin/bash
+          TOKEN="$1"
+          EXPIRY="$2"
+          
+          echo "Using Azure token (expires: $EXPIRY)"
+          
+          # Example: Get resource groups using REST API
+          curl -s -H "Authorization: Bearer $TOKEN" \
+               -H "Content-Type: application/json" \
+               "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourcegroups?api-version=2021-04-01" | \
+               jq '.value[] | .name'
+          EOF
+          
+          chmod +x custom_azure_script.sh
+          ./custom_azure_script.sh "$AZURE_TOKEN" "$TOKEN_EXPIRY"
+        env:
+          AZURE_TOKEN: ${{ steps.azure-auth.outputs.azure-token }}
+          TOKEN_EXPIRY: ${{ steps.azure-auth.outputs.token-expiry }}
+          SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  azure-operations-without-token:
+    runs-on: ubuntu-latest
+    name: Azure Operations without Token Output (more secure)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Azure using OIDC (secure mode)
+        id: azure-auth-secure
+        uses: your-username/azure-oidc-action@v1
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          # output-token defaults to false for security
+
+      - name: Show only token expiry
+        run: |
+          echo "Token expires at: ${{ steps.azure-auth-secure.outputs.token-expiry }}"
+          echo "Azure token is not exposed for security"
+
+      # In this mode, you would typically use Azure CLI or SDK
+      # which can pick up the credential automatically
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Use Azure CLI (picks up credential automatically)
+        run: |
+          az account show
+          az resource list --output table

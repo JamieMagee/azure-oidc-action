@@ -1,0 +1,38 @@
+name: "Azure OIDC Authentication"
+description: "Authenticate with Azure using GitHub Actions OIDC tokens"
+author: "Jamie"
+branding:
+  icon: "shield"
+  color: "blue"
+inputs:
+  tenant-id:
+    description: "Azure AD tenant ID"
+    required: true
+  client-id:
+    description: "Azure AD application client ID (App Registration)"
+    required: true
+  audience:
+    description: "OIDC token audience"
+    required: false
+    default: "api://AzureADTokenExchange"
+  output-token:
+    description: "Whether to output the Azure token (security consideration)"
+    required: false
+    default: "false"
+outputs:
+  token-expiry:
+    description: "The expiry time of the Azure token (RFC3339 format)"
+  azure-token:
+    description: "The Azure access token (only output if output-token is true)"
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - "--tenant-id"
+    - ${{ inputs.tenant-id }}
+    - "--client-id"
+    - ${{ inputs.client-id }}
+    - "--audience"
+    - ${{ inputs.audience }}
+    - "--output-token"
+    - ${{ inputs.output-token }}

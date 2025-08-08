@@ -1,0 +1,57 @@
+name: Azure OIDC Example Workflow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for OIDC token
+  contents: read # Required for checkout
+
+jobs:
+  azure-operations:
+    runs-on: ubuntu-latest
+    name: Azure Operations with OIDC
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Azure using OIDC
+        uses: your-username/azure-oidc-action@v1
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+
+      # Example: List Azure resources
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: List Azure subscriptions
+        run: |
+          az account list --output table
+
+      - name: List resource groups
+        run: |
+          az group list --output table
+
+      # Example: Deploy resources using Azure CLI
+      - name: Create resource group (example)
+        run: |
+          az group create \
+            --name rg-example-oidc \
+            --location eastus
+        continue-on-error: true # Don't fail if resource group already exists
+
+      # Example: Use Azure PowerShell
+      - name: Install Azure PowerShell
+        shell: pwsh
+        run: |
+          Install-Module -Name Az -Force -AllowClobber -Scope CurrentUser
+
+      - name: Azure PowerShell example
+        shell: pwsh
+        run: |
+          # The credential should work with PowerShell as well
+          Get-AzSubscription | Format-Table

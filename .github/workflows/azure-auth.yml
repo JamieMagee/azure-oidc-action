@@ -1,0 +1,44 @@
+name: Azure OIDC Authentication Example
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write # Required for requesting OIDC token
+  contents: read # Required for actions/checkout
+
+jobs:
+  azure-auth-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24"
+
+      - name: Build Azure OIDC tool
+        run: go build -o azure-oidc-action
+
+      - name: Test Azure authentication
+        run: |
+          ./azure-oidc-action \
+            --tenant-id ${{ secrets.AZURE_TENANT_ID }} \
+            --client-id ${{ secrets.AZURE_CLIENT_ID }}
+
+      # Example: Use the credential with Azure CLI
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Test Azure operations
+        run: |
+          # At this point, the tool has authenticated and created credentials
+          # You can now use Azure SDK clients or Azure CLI with the established identity
+          echo "Azure authentication successful!"
+          echo "You can now use Azure SDK clients in your application"
