@@ -89,7 +89,7 @@ func main() {
 	defer cancel()
 
 	token, err := credential.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://management.azure.com/.default"},
+		Scopes: []string{"499b84ac-1321-427f-aa17-267ca6975798/.default"},
 	})
 	if err != nil {
 		log.Fatalf("Failed to get Azure token: %v", err)
