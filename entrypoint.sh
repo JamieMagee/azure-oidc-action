@@ -5,7 +5,7 @@ set -e
 echo "🔐 Starting Azure OIDC Authentication..."
 
 # Run the azure-oidc-action binary with all provided arguments
-./azure-oidc-action "$@"
+/root/azure-oidc-action "$@"
 
 # Capture the exit code
 exit_code=$?
